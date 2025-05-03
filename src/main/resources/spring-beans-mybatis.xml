@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+    <!-- dao, service auto scanning -->
+    <context:component-scan base-package="**.service,**.dao" />
+	<context:property-placeholder location="classpath:values.properties"/>
+	
+	<!-- DataSource 구현체인 HikariDataSource 클래스를 Bean으로 설정하기 -->
+	<bean id="dataSource" class="com.zaxxer.hikari.HikariDataSource"
+		p:driverClassName="${db.driverClass}"
+		p:jdbcUrl="${db.url}"
+		p:username="${db.username}"
+		p:password="${db.password}"
+	/>
+	
+	<!-- SqlSessionFactoryBean 설정 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- setDataSource를 setter injection -->
+        <property name="dataSource" ref="dataSource" />
+        
+        <!-- setConfigLocation을 setter injection: MyBatis config xml -->
+        <property name="configLocation" value="classpath:mybatis/SqlMapConfig.xml" />
+        
+        <!-- setMapperLocations를 setter injection: SQL문이 포함된 mapper xml -->
+        <property name="mapperLocations">
+            <list>
+<!--                 <value>classpath:mybatis/*Mapper.xml</value> -->
+                <value>classpath:mybatis/CustomerMapper.xml</value>
+            </list>
+        </property>
+    </bean>
+    
+    <!-- SqlSession 설정 -->
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+        <!-- 얘는 기본 생성자가 없기 때문에 constructor injection 방식으로만 가능 -->
+        <constructor-arg ref="sqlSessionFactory" />
+    </bean>
+    
+    <!-- MapperScannerConfigurer 설정 == Mapper interface를 scanning하는 역할 -->    
+        <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="mylab.**.dao.mapper"/>
+        <property name="sqlSessionTemplateBeanName" value="sqlSession" /> 
+    </bean>
+</beans>
